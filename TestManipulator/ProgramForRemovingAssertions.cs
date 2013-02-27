@@ -27,23 +27,24 @@ using Paraiba.Core;
 
 namespace TestManipulator {
 	public class ProgramForRemovingAssertions {
+		private const string TargetString = "/**/assert";
+
 		public static void Do(string[] args) {
-			var count = args.Length > 0 ? args[0].ToInt() : 50;
 			var paths =
 					Directory.EnumerateFiles(
 							@"src\test", "*.java", SearchOption.AllDirectories).ToList();
-			while (true) {
+			for (int rate = args.Length > 0 ? args[0].ToInt() : 0; rate <= 100; rate += 10) {
 				// Clean up
 				var sources = GetCleanedSources(paths);
 
 				// Count assert methods
 				var allPathAndIndicies = paths.SelectMany(
-						path => sources[path].IndicesOf("assert")
+						path => sources[path].IndicesOf(TargetString)
 								.Select(i => Tuple.Create(path, i)))
 						.Select((t, index) => Tuple.Create(t.Item1, t.Item2, index))
 						.ToList();
 				var pathAndIndicies = allPathAndIndicies
-						.Take((int)(allPathAndIndicies.Count * count / 100.0 + 0.5))
+						.Take(allPathAndIndicies.Count * rate / 100)
 						.ToList();
 
 				// Remove @Test
@@ -51,7 +52,7 @@ namespace TestManipulator {
 					var path = pathAndIndex.Item1;
 					var sourceIndex = pathAndIndex.Item2;
 					var source = sources[path];
-					var testIndex = source.IndexOf("assert", sourceIndex);
+					var testIndex = source.IndexOf(TargetString, sourceIndex);
 					sources[path] = source.Substring(0, testIndex) + "//"
 							+ source.Substring(testIndex);
 				}
@@ -69,7 +70,7 @@ namespace TestManipulator {
 			var sources = paths.Select(
 					path => {
 						var source = File.ReadAllText(path);
-						source = source.Replace("//assert", "assert");
+						source = source.Replace("//" + TargetString, TargetString);
 						return Tuple.Create(path, source);
 					})
 					.ToDictionary(
