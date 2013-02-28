@@ -34,6 +34,8 @@ namespace TestManipulator {
 					Directory.EnumerateFiles(
 							@"src\test", "*.java", SearchOption.AllDirectories).ToList();
 			for (int rate = args.Length > 0 ? args[0].ToInt() : 0; rate <= 100; rate += 10) {
+				Reset();
+
 				// Clean up
 				var sources = GetCleanedSources(paths);
 
@@ -77,6 +79,11 @@ namespace TestManipulator {
 							pathAndSource => pathAndSource.Item1,
 							pathAndSource => pathAndSource.Item2);
 			return sources;
+		}
+
+		private static void Reset() {
+			var process = Process.Start("reset.bat");
+			process.WaitForExit();
 		}
 
 		private static void RunJester() {
